@@ -1,6 +1,7 @@
 package com.logmonitoring.controller;
 
 import com.logmonitoring.model.LogEntry;
+import com.logmonitoring.util.LogTimestampFormatter;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
@@ -48,9 +49,11 @@ public class MainController {
         comboLevel.setItems(FXCollections.observableArrayList(
                 "None", "INFO", "WARN", "ERROR", "DEBUG", "CRITICAL", "ALERT", "NOTICE", "TRACE"));
 
+        LogTimestampFormatter timestampFormatter = new LogTimestampFormatter();
         colTimestamp.setCellValueFactory(cellData -> {
             var t = cellData.getValue().getTimestamp();
-            return new javafx.beans.property.SimpleStringProperty(t != null ? t.toString() : "");
+            String formatted = t != null ? timestampFormatter.format(t) : "";
+            return new javafx.beans.property.SimpleStringProperty(formatted);
         });
         colLevel.setCellValueFactory(new PropertyValueFactory<>("level"));
         colSource.setCellValueFactory(new PropertyValueFactory<>("source"));
