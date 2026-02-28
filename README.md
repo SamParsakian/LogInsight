@@ -1,4 +1,4 @@
-# SysLogAnalyser
+# LogInsight
 
 A JavaFX desktop application for viewing, filtering, and analysing log files. You can open log files, filter by date/time/level/source/user/IP, view charts (logs over time, level distribution, top sources), add notes to log entries, and export reports as Text, JSON, or CSV.
 
