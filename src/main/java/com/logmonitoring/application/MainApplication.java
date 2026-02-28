@@ -1,5 +1,6 @@
 package com.logmonitoring.application;
 
+import com.logmonitoring.service.UserDao;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
@@ -12,6 +13,7 @@ public class MainApplication extends Application {
     @Override
     public void start(Stage stage) throws Exception {
         this.primaryStage = stage;
+        new UserDao().createTableIfNotExists();
         showLoginView();
     }
 
