@@ -1,6 +1,8 @@
 package com.logmonitoring.controller;
 
 import com.logmonitoring.model.LogEntry;
+import com.logmonitoring.service.FilterService;
+import com.logmonitoring.service.FilterState;
 import com.logmonitoring.service.LogDataService;
 import com.logmonitoring.service.LogParser;
 import com.logmonitoring.util.LogTimestampFormatter;
@@ -83,7 +85,35 @@ public class MainController {
             sample.add(new LogEntry(LocalDateTime.now().minusMinutes(5), "WARN", "database", "Slow query detected", "system", "10.0.0.1"));
             LogDataService.getInstance().setAllLogs(sample);
         }
-        tableLogs.setItems(LogDataService.getInstance().getAllLogs());
+        loadFilterState();
+        FilterService.getInstance().applyFilters();
+        tableLogs.setItems(FilterService.getInstance().getFilteredLogs());
+    }
+
+    private void loadFilterState() {
+        FilterState state = FilterService.getInstance().getFilterState();
+        dateFrom.setValue(state.getDateFrom());
+        dateTo.setValue(state.getDateTo());
+        timeFrom.setText(state.getTimeFrom() != null ? state.getTimeFrom() : "");
+        timeTo.setText(state.getTimeTo() != null ? state.getTimeTo() : "");
+        String level = state.getLevel();
+        comboLevel.setValue(level != null && !level.isEmpty() ? level : "None");
+        txtSource.setText(state.getSource() != null ? state.getSource() : "");
+        txtUser.setText(state.getUser() != null ? state.getUser() : "");
+        txtIp.setText(state.getIp() != null ? state.getIp() : "");
+    }
+
+    private void saveFilterState() {
+        FilterState state = FilterService.getInstance().getFilterState();
+        state.setDateFrom(dateFrom.getValue());
+        state.setDateTo(dateTo.getValue());
+        state.setTimeFrom(timeFrom.getText() != null ? timeFrom.getText().trim() : null);
+        state.setTimeTo(timeTo.getText() != null ? timeTo.getText().trim() : null);
+        String level = comboLevel.getValue();
+        state.setLevel(level != null && "None".equals(level) ? null : level);
+        state.setSource(txtSource.getText() != null ? txtSource.getText().trim() : null);
+        state.setUser(txtUser.getText() != null ? txtUser.getText().trim() : null);
+        state.setIp(txtIp.getText() != null ? txtIp.getText().trim() : null);
     }
 
     @FXML
@@ -101,7 +131,8 @@ public class MainController {
                 LogParser parser = new LogParser();
                 List<LogEntry> parsedLogs = parser.parseLogFile(file);
                 LogDataService.getInstance().setAllLogs(parsedLogs);
-                tableLogs.setItems(LogDataService.getInstance().getAllLogs());
+                FilterService.getInstance().applyFilters();
+                tableLogs.setItems(FilterService.getInstance().getFilteredLogs());
             } catch (IOException e) {
                 Alert alert = new Alert(Alert.AlertType.ERROR);
                 alert.setTitle("Error");
@@ -128,10 +159,25 @@ public class MainController {
     private void onAbout() { }
 
     @FXML
-    private void onApplyFilter() { }
+    private void onApplyFilter() {
+        saveFilterState();
+        FilterService.getInstance().applyFilters();
+        tableLogs.setItems(FilterService.getInstance().getFilteredLogs());
+    }
 
     @FXML
-    private void onClearFilter() { }
+    private void onClearFilter() {
+        dateFrom.setValue(null);
+        dateTo.setValue(null);
+        timeFrom.clear();
+        timeTo.clear();
+        comboLevel.setValue("None");
+        txtSource.clear();
+        txtUser.clear();
+        txtIp.clear();
+        FilterService.getInstance().clearFilters();
+        tableLogs.setItems(FilterService.getInstance().getFilteredLogs());
+    }
 
     @FXML
     private void onGraphView() { }
