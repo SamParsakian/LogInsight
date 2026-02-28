@@ -1,5 +1,6 @@
 package com.logmonitoring.application;
 
+import com.logmonitoring.service.FlaggedLogDao;
 import com.logmonitoring.service.UserDao;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
@@ -20,6 +21,7 @@ public class MainApplication extends Application {
         instance = this;
         this.primaryStage = stage;
         new UserDao().createTableIfNotExists();
+        new FlaggedLogDao().createTableIfNotExists();
         showLoginView();
     }
 
