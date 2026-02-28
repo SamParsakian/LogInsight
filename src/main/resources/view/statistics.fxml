@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.chart.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/17"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.logmonitoring.controller.StatisticsController">
+
+    <top>
+        <VBox style="-fx-padding: 12; -fx-background-color: #f0f0f0; -fx-border-color: #d0d0d0; -fx-border-width: 0 0 1 0;" spacing="12">
+            <Label text="Filters" style="-fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: #333333;"/>
+
+            <GridPane hgap="12" vgap="10" alignment="CENTER_LEFT">
+                <columnConstraints>
+                    <ColumnConstraints minWidth="90" prefWidth="100" halignment="RIGHT"/>
+                    <ColumnConstraints minWidth="180" prefWidth="180" hgrow="NEVER"/>
+                    <ColumnConstraints minWidth="90" prefWidth="100" halignment="RIGHT"/>
+                    <ColumnConstraints minWidth="180" prefWidth="180" hgrow="NEVER"/>
+                    <ColumnConstraints hgrow="ALWAYS"/>
+                </columnConstraints>
+                <Label text="Date From:" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                <DatePicker fx:id="dateFrom" GridPane.columnIndex="1" GridPane.rowIndex="0" prefWidth="180" minWidth="180" maxWidth="180"/>
+                <Label text="Date To:" GridPane.columnIndex="2" GridPane.rowIndex="0"/>
+                <DatePicker fx:id="dateTo" GridPane.columnIndex="3" GridPane.rowIndex="0" prefWidth="180" minWidth="180" maxWidth="180"/>
+                <Label text="Time From:" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+                <TextField fx:id="timeFrom" promptText="HH:mm" GridPane.columnIndex="1" GridPane.rowIndex="1" prefWidth="180" minWidth="180" maxWidth="180"/>
+                <Label text="Time To:" GridPane.columnIndex="2" GridPane.rowIndex="1"/>
+                <TextField fx:id="timeTo" promptText="HH:mm" GridPane.columnIndex="3" GridPane.rowIndex="1" prefWidth="180" minWidth="180" maxWidth="180"/>
+                <Label text="Log Level:" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
+                <ComboBox fx:id="comboLevel" GridPane.columnIndex="1" GridPane.rowIndex="2" prefWidth="180" minWidth="180" maxWidth="180"/>
+                <Label text="Source:" GridPane.columnIndex="2" GridPane.rowIndex="2"/>
+                <TextField fx:id="txtSource" promptText="Source" GridPane.columnIndex="3" GridPane.rowIndex="2" prefWidth="180" minWidth="180" maxWidth="180"/>
+                <Label text="User:" GridPane.columnIndex="0" GridPane.rowIndex="3"/>
+                <TextField fx:id="txtUser" promptText="User" GridPane.columnIndex="1" GridPane.rowIndex="3" prefWidth="180" minWidth="180" maxWidth="180"/>
+                <Label text="IP:" GridPane.columnIndex="2" GridPane.rowIndex="3"/>
+                <TextField fx:id="txtIp" promptText="IP Address" GridPane.columnIndex="3" GridPane.rowIndex="3" prefWidth="180" minWidth="180" maxWidth="180"/>
+            </GridPane>
+
+            <HBox spacing="10" alignment="CENTER_LEFT">
+                <Button text="Apply Filter" onAction="#onApplyFilter" prefWidth="130" minWidth="130" maxWidth="130" style="-fx-background-color: #5a7fa3; -fx-text-fill: white; -fx-background-radius: 3;"/>
+                <Button text="Clear Filter" onAction="#onClearFilter" prefWidth="130" minWidth="130" maxWidth="130" style="-fx-background-color: #e0e0e0; -fx-background-radius: 3;"/>
+            </HBox>
+        </VBox>
+    </top>
+
+    <center>
+        <VBox spacing="15" style="-fx-padding: 15;">
+            <HBox spacing="15">
+                <VBox spacing="5" HBox.hgrow="ALWAYS">
+                    <Label text="Logs Over Time" style="-fx-font-weight: bold;"/>
+                    <LineChart fx:id="chartLogsOverTime" title="Logs Over Time" HBox.hgrow="ALWAYS" prefHeight="300">
+                        <xAxis><CategoryAxis label="Time"/></xAxis>
+                        <yAxis><NumberAxis label="Count"/></yAxis>
+                    </LineChart>
+                </VBox>
+                <VBox spacing="5" HBox.hgrow="ALWAYS">
+                    <Label text="Log Level Distribution" style="-fx-font-weight: bold;"/>
+                    <PieChart fx:id="chartLevelDistribution" title="Log Level Distribution" HBox.hgrow="ALWAYS" prefHeight="300"/>
+                </VBox>
+            </HBox>
+            <VBox spacing="5" VBox.vgrow="ALWAYS">
+                <Label text="Top Sources" style="-fx-font-weight: bold;"/>
+                <BarChart fx:id="chartTopSources" title="Top Sources" VBox.vgrow="ALWAYS" prefHeight="250">
+                    <xAxis><CategoryAxis label="Source"/></xAxis>
+                    <yAxis><NumberAxis label="Count"/></yAxis>
+                </BarChart>
+            </VBox>
+        </VBox>
+    </center>
+
+    <bottom>
+        <HBox spacing="10" alignment="CENTER_RIGHT"
+              style="-fx-padding: 12; -fx-background-color: #f0f0f0; -fx-border-color: #d0d0d0; -fx-border-width: 1 0 0 0;">
+            <Button text="Back" onAction="#onBack" prefWidth="130" minWidth="130" maxWidth="130" style="-fx-background-color: #e0e0e0; -fx-background-radius: 3;"/>
+            <Button text="Logout" onAction="#onLogout" prefWidth="130" minWidth="130" maxWidth="130" style="-fx-background-color: #e0e0e0; -fx-background-radius: 3;"/>
+        </HBox>
+    </bottom>
+
+</BorderPane>
