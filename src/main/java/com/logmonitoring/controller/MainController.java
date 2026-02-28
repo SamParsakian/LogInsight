@@ -1,5 +1,6 @@
 package com.logmonitoring.controller;
 
+import com.logmonitoring.application.MainApplication;
 import com.logmonitoring.model.LogEntry;
 import com.logmonitoring.service.FilterService;
 import com.logmonitoring.service.FilterState;
@@ -147,7 +148,18 @@ public class MainController {
     private void onUserManagement() { }
 
     @FXML
-    private void onLogout() { }
+    private void onLogout() {
+        LogDataService.getInstance().clearAllLogs();
+        try {
+            MainApplication.getInstance().showLoginView();
+        } catch (Exception e) {
+            e.printStackTrace();
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Error");
+            alert.setContentText("Failed to logout");
+            alert.showAndWait();
+        }
+    }
 
     @FXML
     private void onExit() {
@@ -156,7 +168,13 @@ public class MainController {
     }
 
     @FXML
-    private void onAbout() { }
+    private void onAbout() {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("About");
+        alert.setHeaderText("Log Monitoring Tool");
+        alert.setContentText("Version 1.0\nA desktop application for log analysis on Linux.");
+        alert.showAndWait();
+    }
 
     @FXML
     private void onApplyFilter() {
