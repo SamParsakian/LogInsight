@@ -2,6 +2,7 @@ package com.logmonitoring.controller;
 
 import com.logmonitoring.application.MainApplication;
 import com.logmonitoring.model.LogEntry;
+import com.logmonitoring.controller.LogDetailsController;
 import com.logmonitoring.controller.StatisticsController;
 import com.logmonitoring.service.FilterService;
 import com.logmonitoring.service.FilterState;
@@ -236,5 +237,22 @@ public class MainController {
     }
 
     @FXML
-    private void onReports() { }
+    private void onReports() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/log_details.fxml"));
+            Parent root = loader.load();
+            LogDetailsController controller = loader.getController();
+            controller.refreshData();
+            Stage stage = (Stage) tableLogs.getScene().getWindow();
+            stage.setScene(new Scene(root));
+            stage.setTitle("Log Monitoring Tool - Reports");
+            stage.show();
+        } catch (IOException e) {
+            e.printStackTrace();
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Error");
+            alert.setContentText("Failed to open Reports");
+            alert.showAndWait();
+        }
+    }
 }
