@@ -1,4 +1,21 @@
+# Build
 target/
+out/
+build/
+
+# IDE
 .idea/
+*.iml
+.classpath
+.project
+.settings/
+*.code-workspace
+
+# Runtime / local data
 *.db
 *.log
+.DS_Store
+
+# Optional
+*.swp
+*~
