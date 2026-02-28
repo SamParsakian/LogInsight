@@ -12,6 +12,9 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
@@ -145,7 +148,21 @@ public class MainController {
     }
 
     @FXML
-    private void onUserManagement() { }
+    private void onUserManagement() {
+        try {
+            Parent root = FXMLLoader.load(getClass().getResource("/view/user_management.fxml"));
+            Stage stage = new Stage();
+            stage.setScene(new Scene(root));
+            stage.setTitle("Log Monitoring Tool - User Management");
+            stage.show();
+        } catch (IOException e) {
+            e.printStackTrace();
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Error");
+            alert.setContentText("Failed to open User Management");
+            alert.showAndWait();
+        }
+    }
 
     @FXML
     private void onLogout() {
