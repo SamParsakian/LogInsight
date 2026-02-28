@@ -10,7 +10,11 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.stage.FileChooser;
+import javafx.stage.Stage;
 
+import java.io.FileWriter;
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
@@ -178,7 +182,137 @@ public class LogDetailsController {
 
     @FXML
     private void onExportReport() {
-        // Stub until STEP 21
+        String format = comboExportFormat.getValue();
+        if (format == null) return;
+
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Export Report");
+
+        String extension;
+        String formatName;
+        switch (format) {
+            case "Text":
+                fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Text Files", "*.txt"));
+                extension = ".txt";
+                formatName = "Text";
+                break;
+            case "JSON":
+                fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("JSON Files", "*.json"));
+                extension = ".json";
+                formatName = "JSON";
+                break;
+            case "CSV":
+                fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV Files", "*.csv"));
+                extension = ".csv";
+                formatName = "CSV";
+                break;
+            default:
+                return;
+        }
+
+        fileChooser.setInitialFileName("log_report_" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")) + extension);
+        Stage stage = (Stage) tableFlaggedLogs.getScene().getWindow();
+        java.io.File file = fileChooser.showSaveDialog(stage);
+
+        if (file != null) {
+            try (FileWriter writer = new FileWriter(file)) {
+                switch (format) {
+                    case "Text":
+                        exportAsText(writer);
+                        break;
+                    case "JSON":
+                        exportAsJSON(writer);
+                        break;
+                    case "CSV":
+                        exportAsCSV(writer);
+                        break;
+                }
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setTitle(formatName + " Exported");
+                alert.setContentText(formatName + " exported successfully to: " + file.getName());
+                alert.showAndWait();
+            } catch (IOException e) {
+                e.printStackTrace();
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Error");
+                alert.setContentText("Failed to export " + formatName + ": " + e.getMessage());
+                alert.showAndWait();
+            }
+        }
+    }
+
+    private static final DateTimeFormatter EXPORT_DT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+    private void exportAsText(FileWriter writer) throws IOException {
+        writer.write("Log Monitoring Tool - Report\n");
+        writer.write("Generated: " + LocalDateTime.now().format(EXPORT_DT) + "\n");
+        writer.write("=".repeat(50) + "\n\n");
+        for (LogEntry log : flaggedLogs) {
+            writer.write("Timestamp: " + (log.getTimestamp() != null ? log.getTimestamp().format(EXPORT_DT) : "") + "\n");
+            writer.write("Level: " + nullToEmpty(log.getLevel()) + "\n");
+            writer.write("Source: " + nullToEmpty(log.getSource()) + "\n");
+            writer.write("Message: " + nullToEmpty(log.getMessage()) + "\n");
+            writer.write("User: " + nullToEmpty(log.getUser()) + "\n");
+            writer.write("IP: " + nullToEmpty(log.getSrcIp()) + "\n");
+            String note = logNotes.getOrDefault(log, "");
+            if (!note.isEmpty()) writer.write("Note: " + note + "\n");
+            if (logReviewStatus.getOrDefault(log, false)) writer.write("Status: Marked for Review\n");
+            writer.write("-".repeat(50) + "\n");
+        }
+    }
+
+    private void exportAsJSON(FileWriter writer) throws IOException {
+        writer.write("{\n  \"report\": {\n");
+        writer.write("    \"generated\": \"" + LocalDateTime.now().format(EXPORT_DT) + "\",\n");
+        writer.write("    \"entries\": [\n");
+        boolean first = true;
+        for (LogEntry log : flaggedLogs) {
+            if (!first) writer.write(",\n");
+            first = false;
+            writer.write("      {\n");
+            writer.write("        \"timestamp\": \"" + (log.getTimestamp() != null ? log.getTimestamp().format(EXPORT_DT) : "") + "\",\n");
+            writer.write("        \"level\": \"" + escapeJson(nullToEmpty(log.getLevel())) + "\",\n");
+            writer.write("        \"source\": \"" + escapeJson(nullToEmpty(log.getSource())) + "\",\n");
+            writer.write("        \"message\": \"" + escapeJson(nullToEmpty(log.getMessage())) + "\",\n");
+            writer.write("        \"user\": \"" + escapeJson(nullToEmpty(log.getUser())) + "\",\n");
+            writer.write("        \"srcIp\": \"" + escapeJson(nullToEmpty(log.getSrcIp())) + "\",\n");
+            writer.write("        \"note\": \"" + escapeJson(logNotes.getOrDefault(log, "")) + "\",\n");
+            writer.write("        \"status\": \"" + (logReviewStatus.getOrDefault(log, false) ? "For Review" : "") + "\"\n");
+            writer.write("      }");
+        }
+        writer.write("\n    ]\n  }\n}\n");
+    }
+
+    private String escapeJson(String str) {
+        if (str == null) return "";
+        return str.replace("\\", "\\\\")
+                .replace("\"", "\\\"")
+                .replace("\n", "\\n")
+                .replace("\r", "\\r")
+                .replace("\t", "\\t");
+    }
+
+    private void exportAsCSV(FileWriter writer) throws IOException {
+        writer.write("Timestamp,Level,Source,Message,User,Source IP,Note,Status\n");
+        for (LogEntry log : flaggedLogs) {
+            writer.write("\"" + (log.getTimestamp() != null ? log.getTimestamp().format(EXPORT_DT) : "") + "\",");
+            writer.write("\"" + csvQuoted(nullToEmpty(log.getLevel())) + "\",");
+            writer.write("\"" + csvQuoted(nullToEmpty(log.getSource())) + "\",");
+            writer.write("\"" + csvQuoted(nullToEmpty(log.getMessage())) + "\",");
+            writer.write("\"" + csvQuoted(nullToEmpty(log.getUser())) + "\",");
+            writer.write("\"" + csvQuoted(nullToEmpty(log.getSrcIp())) + "\",");
+            writer.write("\"" + csvQuoted(logNotes.getOrDefault(log, "")) + "\",");
+            writer.write(logReviewStatus.getOrDefault(log, false) ? "\"For Review\"" : "\"\"");
+            writer.write("\n");
+        }
+    }
+
+    private static String nullToEmpty(String s) {
+        return s == null ? "" : s;
+    }
+
+    private static String csvQuoted(String s) {
+        return (s == null ? "" : s).replace("\"", "\"\"");
     }
 
     @FXML
