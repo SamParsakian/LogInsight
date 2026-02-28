@@ -25,7 +25,7 @@ import java.util.Map;
  * Controller for Reports (Flagged Logs). Back and Logout do not clear logs.
  * Main table does NOT auto-load DB notes (quirk); notes only in Review Saved Notes dialog.
  */
-public class LogDetailsController {
+public class LogDetailsController implements Refreshable {
 
     @FXML
     private TableView<LogEntry> tableFlaggedLogs;
@@ -92,6 +92,7 @@ public class LogDetailsController {
         });
     }
 
+    @Override
     public void refreshData() {
         FilterService.getInstance().applyFilters();
         loadFlaggedLogs();

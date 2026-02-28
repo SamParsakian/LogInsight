@@ -18,7 +18,7 @@ import java.util.Map;
 /**
  * Controller for Graph View (Statistics). Shared FilterService. Logout does not clear logs.
  */
-public class StatisticsController {
+public class StatisticsController implements Refreshable {
 
     @FXML
     private LineChart<String, Number> chartLogsOverTime;
@@ -90,6 +90,7 @@ public class StatisticsController {
         filteredLogs = FilterService.getInstance().getFilteredLogs();
     }
 
+    @Override
     public void refreshData() {
         loadLogsFromService();
         loadFilterState();
@@ -98,6 +99,9 @@ public class StatisticsController {
     }
 
     private void updateCharts() {
+        if (filteredLogs == null) {
+            filteredLogs = FXCollections.observableArrayList();
+        }
         updateLogsOverTimeChart();
         updateLevelDistributionChart();
         updateTopSourcesChart();
