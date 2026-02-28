@@ -8,10 +8,16 @@ import javafx.stage.Stage;
 
 public class MainApplication extends Application {
 
+    private static MainApplication instance;
     private Stage primaryStage;
+
+    public static MainApplication getInstance() {
+        return instance;
+    }
 
     @Override
     public void start(Stage stage) throws Exception {
+        instance = this;
         this.primaryStage = stage;
         new UserDao().createTableIfNotExists();
         showLoginView();
