@@ -1,8 +1,14 @@
 package com.logmonitoring.controller;
 
 import com.logmonitoring.model.LogEntry;
+import com.logmonitoring.service.LogDataService;
 import com.logmonitoring.util.LogTimestampFormatter;
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -60,6 +66,20 @@ public class MainController {
         colMessage.setCellValueFactory(new PropertyValueFactory<>("message"));
         colUser.setCellValueFactory(new PropertyValueFactory<>("user"));
         colSrcIp.setCellValueFactory(new PropertyValueFactory<>("srcIp"));
+
+        ObservableList<LogEntry> serviceLogs = LogDataService.getInstance().getAllLogs();
+        if (serviceLogs == null || serviceLogs.isEmpty()) {
+            List<LogEntry> sample = new ArrayList<>();
+            sample.add(new LogEntry(LocalDateTime.now().minusHours(2), "INFO", "web-server", "User login successful", "admin", "192.168.1.100"));
+            sample.add(new LogEntry(LocalDateTime.now().minusHours(1), "WARN", "database", "Connection pool nearly full", "system", "10.0.0.1"));
+            sample.add(new LogEntry(LocalDateTime.now().minusMinutes(45), "ERROR", "api-service", "Failed to process request", "user123", "192.168.1.50"));
+            sample.add(new LogEntry(LocalDateTime.now().minusMinutes(30), "INFO", "web-server", "Page loaded successfully", "guest", "192.168.1.200"));
+            sample.add(new LogEntry(LocalDateTime.now().minusMinutes(15), "ERROR", "auth-service", "Authentication failed", "user456", "192.168.1.75"));
+            sample.add(new LogEntry(LocalDateTime.now().minusMinutes(10), "INFO", "web-server", "File uploaded", "admin", "192.168.1.100"));
+            sample.add(new LogEntry(LocalDateTime.now().minusMinutes(5), "WARN", "database", "Slow query detected", "system", "10.0.0.1"));
+            LogDataService.getInstance().setAllLogs(sample);
+        }
+        tableLogs.setItems(LogDataService.getInstance().getAllLogs());
     }
 
     @FXML
