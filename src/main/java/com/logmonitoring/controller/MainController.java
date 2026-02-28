@@ -2,16 +2,20 @@ package com.logmonitoring.controller;
 
 import com.logmonitoring.model.LogEntry;
 import com.logmonitoring.service.LogDataService;
+import com.logmonitoring.service.LogParser;
 import com.logmonitoring.util.LogTimestampFormatter;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.stage.FileChooser;
+import javafx.stage.Stage;
+
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Controller for the main log viewer. Table and menu actions are stubs until later steps.
@@ -83,7 +87,30 @@ public class MainController {
     }
 
     @FXML
-    private void onOpenLogFile() { }
+    private void onOpenLogFile() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Open Log File");
+        fileChooser.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter("Log Files", "*.log", "*.txt"));
+
+        Stage stage = (Stage) tableLogs.getScene().getWindow();
+        java.io.File file = fileChooser.showOpenDialog(stage);
+
+        if (file != null) {
+            try {
+                LogParser parser = new LogParser();
+                List<LogEntry> parsedLogs = parser.parseLogFile(file);
+                LogDataService.getInstance().setAllLogs(parsedLogs);
+                tableLogs.setItems(LogDataService.getInstance().getAllLogs());
+            } catch (IOException e) {
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Error");
+                alert.setHeaderText("Failed to read log file");
+                alert.setContentText("Could not read file: " + file.getName() + "\n" + e.getMessage());
+                alert.showAndWait();
+            }
+        }
+    }
 
     @FXML
     private void onUserManagement() { }
@@ -93,7 +120,7 @@ public class MainController {
 
     @FXML
     private void onExit() {
-        javafx.stage.Stage stage = (javafx.stage.Stage) tableLogs.getScene().getWindow();
+        Stage stage = (Stage) tableLogs.getScene().getWindow();
         stage.close();
     }
 
