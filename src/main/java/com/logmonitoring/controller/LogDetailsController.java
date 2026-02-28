@@ -3,6 +3,7 @@ package com.logmonitoring.controller;
 import com.logmonitoring.application.MainApplication;
 import com.logmonitoring.model.LogEntry;
 import com.logmonitoring.service.FilterService;
+import com.logmonitoring.service.FlaggedLogDao;
 import com.logmonitoring.util.LogTimestampFormatter;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -11,10 +12,14 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Controller for Reports (Flagged Logs). Back and Logout do not clear logs.
- * Add Note, Review Saved Notes, Export are stubs until later steps.
+ * Main table does NOT auto-load DB notes (quirk); notes only in Review Saved Notes dialog.
  */
 public class LogDetailsController {
 
@@ -43,9 +48,17 @@ public class LogDetailsController {
     private ComboBox<String> comboExportFormat;
 
     private ObservableList<LogEntry> flaggedLogs;
+    private Map<LogEntry, String> logNotes;
+    private Map<LogEntry, Boolean> logReviewStatus;
+    private FlaggedLogDao flaggedLogDao;
 
     @FXML
     private void initialize() {
+        logNotes = new HashMap<>();
+        logReviewStatus = new HashMap<>();
+        flaggedLogDao = new FlaggedLogDao();
+        flaggedLogDao.createTableIfNotExists();
+
         LogTimestampFormatter timestampFormatter = new LogTimestampFormatter();
         colTimestamp.setCellValueFactory(cellData -> {
             LocalDateTime t = cellData.getValue().getTimestamp();
@@ -57,37 +70,110 @@ public class LogDetailsController {
         colMessage.setCellValueFactory(new PropertyValueFactory<>("message"));
         colUser.setCellValueFactory(new PropertyValueFactory<>("user"));
         colSrcIp.setCellValueFactory(new PropertyValueFactory<>("srcIp"));
-        colNote.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(""));
-        colStatus.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(""));
+        colNote.setCellValueFactory(cellData ->
+                new javafx.beans.property.SimpleStringProperty(logNotes.getOrDefault(cellData.getValue(), "")));
+        colStatus.setCellValueFactory(cellData ->
+                new javafx.beans.property.SimpleStringProperty(logReviewStatus.getOrDefault(cellData.getValue(), false) ? "For Review" : ""));
 
         comboExportFormat.setItems(FXCollections.observableArrayList("Text", "JSON", "CSV"));
         comboExportFormat.setValue("Text");
 
         flaggedLogs = FXCollections.observableArrayList();
         tableFlaggedLogs.setItems(flaggedLogs);
+
+        tableFlaggedLogs.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null) {
+                txtNote.setText(logNotes.getOrDefault(newVal, ""));
+            }
+        });
     }
 
-    /**
-     * Refreshes data when window is shown. Loads filtered logs from FilterService.
-     */
     public void refreshData() {
         FilterService.getInstance().applyFilters();
-        flaggedLogs = FilterService.getInstance().getFilteredLogs();
-        if (flaggedLogs == null) {
-            flaggedLogs = FXCollections.observableArrayList();
-        }
+        loadFlaggedLogs();
         tableFlaggedLogs.setItems(flaggedLogs);
         tableFlaggedLogs.refresh();
     }
 
+    private void loadFlaggedLogs() {
+        flaggedLogs = FXCollections.observableArrayList();
+        ObservableList<LogEntry> filtered = FilterService.getInstance().getFilteredLogs();
+        if (filtered != null) {
+            flaggedLogs.addAll(filtered);
+        }
+    }
+
     @FXML
     private void onAddNote() {
-        // Stub until STEP 20
+        LogEntry selected = tableFlaggedLogs.getSelectionModel().getSelectedItem();
+        if (selected == null) {
+            Alert alert = new Alert(Alert.AlertType.WARNING);
+            alert.setTitle("No Selection");
+            alert.setContentText("Please select a log entry first");
+            alert.showAndWait();
+            return;
+        }
+        String note = txtNote.getText() != null ? txtNote.getText().trim() : "";
+        boolean reviewStatus = false;
+
+        logNotes.put(selected, note);
+        logReviewStatus.put(selected, reviewStatus);
+        flaggedLogDao.saveOrUpdateFlaggedLog(selected, note, reviewStatus);
+
+        tableFlaggedLogs.refresh();
+
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Note Saved");
+        alert.setContentText("Note has been saved to the selected log entry");
+        alert.showAndWait();
     }
 
     @FXML
     private void onReviewSavedNotes() {
-        // Stub until STEP 20
+        List<FlaggedLogDao.FlaggedLogRecord> savedRecords = flaggedLogDao.loadAllFlaggedLogs();
+        if (savedRecords.isEmpty()) {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("No Saved Notes");
+            alert.setContentText("No saved notes found in database.");
+            alert.showAndWait();
+            return;
+        }
+
+        Dialog<Void> dialog = new Dialog<>();
+        dialog.setTitle("Saved Notes Review");
+        dialog.setHeaderText("Found " + savedRecords.size() + " saved note(s)");
+
+        TableView<FlaggedLogDao.FlaggedLogRecord> savedTable = new TableView<>();
+
+        TableColumn<FlaggedLogDao.FlaggedLogRecord, String> colTs = new TableColumn<>("Timestamp");
+        colTs.setCellValueFactory(cellData -> {
+            LocalDateTime t = cellData.getValue().getLogEntry().getTimestamp();
+            return new javafx.beans.property.SimpleStringProperty(t != null ? t.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) : "");
+        });
+        TableColumn<FlaggedLogDao.FlaggedLogRecord, String> colLev = new TableColumn<>("Level");
+        colLev.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(cellData.getValue().getLogEntry().getLevel()));
+        TableColumn<FlaggedLogDao.FlaggedLogRecord, String> colSrc = new TableColumn<>("Source");
+        colSrc.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(cellData.getValue().getLogEntry().getSource()));
+        TableColumn<FlaggedLogDao.FlaggedLogRecord, String> colMsg = new TableColumn<>("Message");
+        colMsg.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(cellData.getValue().getLogEntry().getMessage()));
+        TableColumn<FlaggedLogDao.FlaggedLogRecord, String> colN = new TableColumn<>("Note");
+        colN.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(cellData.getValue().getNote() != null ? cellData.getValue().getNote() : ""));
+        TableColumn<FlaggedLogDao.FlaggedLogRecord, String> colSt = new TableColumn<>("Status");
+        colSt.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(cellData.getValue().isReviewStatus() ? "For Review" : ""));
+
+        savedTable.getColumns().add(colTs);
+        savedTable.getColumns().add(colLev);
+        savedTable.getColumns().add(colSrc);
+        savedTable.getColumns().add(colMsg);
+        savedTable.getColumns().add(colN);
+        savedTable.getColumns().add(colSt);
+        savedTable.setItems(FXCollections.observableArrayList(savedRecords));
+        savedTable.setPrefWidth(800);
+        savedTable.setPrefHeight(400);
+
+        dialog.getDialogPane().setContent(savedTable);
+        dialog.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
+        dialog.showAndWait();
     }
 
     @FXML
