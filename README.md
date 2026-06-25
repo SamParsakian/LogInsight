@@ -54,4 +54,4 @@ mvn clean compile
 
 ## Demo Video
 
-[![Watch the demo](https://img.youtube.com/vi/CeDiItiCf3Q/0.jpg)](https://youtu.be/CeDiItiCf3Q)
+[![Watch the demo](https://img.youtube.com/vi/CeDiItiCf3Q/maxresdefault.jpg)](https://youtu.be/CeDiItiCf3Q)
